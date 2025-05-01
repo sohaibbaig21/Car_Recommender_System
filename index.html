@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Car Recommender</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #3B82F6, #A78BFA);
+            font-family: 'Poppins', sans-serif;
+        }
+        .glassmorphism {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .option-button {
+            transition: all 0.3s ease;
+        }
+        .option-button:hover {
+            transform: scale(1.03);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            background-color: #93C5FD;
+        }
+        .option-button.selected {
+            background-color: #93C5FD;
+        }
+        #question-container {
+            transition: opacity 0.3s ease;
+        }
+        .fade-out {
+            opacity: 0;
+        }
+        .fade-in {
+            opacity: 1;
+        }
+        .progress-bar {
+            height: 8px;
+            background-color: #E5E7EB;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background-color: #1E3A8A;
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center">
+    <div class="container mx-auto p-4 max-w-2xl w-full">
+        <div class="text-center mb-6">
+            <div class="text-4xl mb-2">🚗</div>
+            <h1 class="text-3xl font-bold text-white">Car Recommender</h1>
+        </div>
+        <div id="quiz" class="glassmorphism p-6 rounded-xl shadow-lg">
+            <div class="progress-bar mb-4">
+                <div id="progress-fill" class="progress-fill" style="width: 10%"></div>
+            </div>
+            <div id="question-container" class="fade-in">
+                <h2 id="question" class="text-xl font-semibold text-gray-900 mb-4"></h2>
+                <div id="options" class="space-y-3"></div>
+            </div>
+            <div id="result" class="hidden">
+                <h2 class="text-2xl font-semibold text-gray-900 mb-4">Your Recommended Car</h2>
+                <p id="car-name" class="text-lg font-medium text-gray-800"></p>
+                <p id="reasoning" class="mt-2 text-gray-700"></p>
+                <button id="restart" class="mt-4 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-all">Start Over</button>
+            </div>
+        </div>
+        <p id="progress" class="text-center mt-4 text-white font-light"></p>
+    </div>
+
+    <script>
+       const questions = [
+    {
+        question: "What is your primary use for the car?",
+        options: ["Daily commuting", "Family trips", "Off-road adventures", "Luxury and status"],
+        key: "use",
+        icons: ["🚗", "👨‍👩‍👧‍👦", "🏞️", "💼"]
+    },
+    {
+        question: "What is your budget range?",
+        options: ["Under $20,000", "$20,000 - $35,000", "$35,000 - $50,000", "Over $50,000"],
+        key: "budget",
+        icons: ["💵", "💰", "💸", "💎"]
+    },
+    {
+        question: "What fuel type do you prefer?",
+        options: ["Gasoline", "Hybrid", "Electric", "Diesel"],
+        key: "fuel",
+        icons: ["⛽", "🔋", "⚡️", "🛢️"]
+    },
+    {
+        question: "How many seats do you need?",
+        options: ["2 seats", "4 seats", "5 seats", "7+ seats"],
+        key: "seats",
+        icons: ["🧑‍🤝‍🧑", "👥", "👨‍👩‍👧", "👨‍👩‍👧‍👦"]
+    },
+    {
+        question: "What is your preferred car size?",
+        options: ["Compact", "Mid-size", "Full-size", "SUV"],
+        key: "size",
+        icons: ["🚗", "🚙", "🚘", "🚐"]
+    },
+    {
+        question: "What driving experience do you prefer?",
+        options: ["Economical", "Balanced", "Sporty", "Comfortable"],
+        key: "driving",
+        icons: ["💸", "⚖️", "🏎️", "🛋️"]
+    },
+    {
+        question: "How important is cargo space?",
+        options: ["Not important", "Somewhat important", "Very important", "Critical"],
+        key: "cargo",
+        icons: ["🧳", "📦", "🚚", "🏬"]
+    },
+    {
+        question: "What climate do you drive in most?",
+        options: ["Warm and dry", "Cold and snowy", "Mixed conditions", "Hot and humid"],
+        key: "climate",
+        icons: ["☀️", "❄️", "🌦️", "🥵"]
+    },
+    {
+        question: "How long do you plan to keep the car?",
+        options: ["1-3 years", "3-5 years", "5-7 years", "7+ years"],
+        key: "duration",
+        icons: ["⏳", "⏰", "⌛", "🕰️"]
+    },
+    {
+        question: "What tech features are important to you?",
+        options: ["Basic connectivity", "Advanced safety", "Infotainment system", "Autonomous driving"],
+        key: "tech",
+        icons: ["📱", "🛡️", "📺", "🤖"]
+    }
+];
+
+        const cars = [
+            {
+                name: "Toyota Corolla",
+                traits: { 
+                    use: "Daily commuting", 
+                    budget: "Under $20,000", 
+                    fuel: "Gasoline", 
+                    seats: "5 seats", 
+                    size: "Compact", 
+                    driving: "Economical", 
+                    cargo: "Not important", 
+                    climate: "Warm and dry", 
+                    duration: "5-7 years", 
+                    tech: "Basic connectivity" 
+                },
+                description: "The Toyota Corolla is a reliable, fuel-efficient compact sedan perfect for daily commuting. It offers low maintenance costs, decent tech features, and excellent resale value, making it ideal for budget-conscious buyers."
+            },
+            {
+                name: "Honda CR-V",
+                traits: { 
+                    use: "Family trips", 
+                    budget: "$20,000 - $35,000", 
+                    fuel: "Hybrid", 
+                    seats: "5 seats", 
+                    size: "SUV", 
+                    driving: "Balanced", 
+                    cargo: "Very important", 
+                    climate: "Mixed conditions", 
+                    duration: "5-7 years", 
+                    tech: "Advanced safety" 
+                },
+                description: "The Honda CR-V is a versatile SUV with ample cargo space and a comfortable ride, ideal for family trips. Its hybrid option offers great fuel economy, and advanced safety features ensure peace of mind."
+            },
+            {
+                name: "Jeep Wrangler",
+                traits: { 
+                    use: "Off-road adventures", 
+                    budget: "$35,000 - $50,000", 
+                    fuel: "Gasoline", 
+                    seats: "4 seats", 
+                    size: "SUV", 
+                    driving: "Sporty", 
+                    cargo: "Somewhat important", 
+                    climate: "Cold and snowy", 
+                    duration: "7+ years", 
+                    tech: "Infotainment system" 
+                },
+                description: "The Jeep Wrangler is built for off-road adventures with rugged durability and excellent performance in Fconditions. It’s perfect for thrill-seekers who value capability over luxury."
+            },
+            {
+                name: "Tesla Model S",
+                traits: { 
+                    use: "Luxury and status", 
+                    budget: "Over $50,000", 
+                    fuel: "Electric", 
+                    seats: "5 seats", 
+                    size: "Full-size", 
+                    driving: "Sporty", 
+                    cargo: "Somewhat important", 
+                    climate: "Mixed conditions", 
+                    duration: "3-5 years", 
+                    tech: "Autonomous driving" 
+                },
+                description: "The Tesla Model S combines luxury, performance, and cutting-edge technology. Its electric powertrain delivers instant acceleration, and autonomous driving features make it a top choice for tech enthusiasts."
+            },
+            {
+                name: "Toyota Sienna",
+                traits: { 
+                    use: "Family trips", 
+                    budget: "$35,000 - $50,000", 
+                    fuel: "Hybrid", 
+                    seats: "7+ seats", 
+                    size: "SUV", 
+                    driving: "Comfortable", 
+                    cargo: "Critical", 
+                    climate: "Hot and humid", 
+                    duration: "7+ years", 
+                    tech: "Infotainment system" 
+                },
+                description: "The Toyota Sienna is a spacious minivan designed for large families. With hybrid efficiency, generous cargo space, and a comfortable interior, it’s perfect for long trips and heavy use."
+            }
+        ];
+
+        let currentQuestion = 0;
+        let answers = [];
+
+        const questionContainer = document.getElementById('question-container');
+        const questionElement = document.getElementById('question');
+        const optionsElement = document.getElementById('options');
+        const resultElement = document.getElementById('result');
+        const carNameElement = document.getElementById('car-name');
+        const reasoningElement = document.getElementById('reasoning');
+        const progressElement = document.getElementById('progress');
+        const progressFill = document.getElementById('progress-fill');
+        const restartButton = document.getElementById('restart');
+
+        function loadQuestion() {
+            const q = questions[currentQuestion];
+            questionElement.textContent = q.question;
+            optionsElement.innerHTML = '';
+            q.options.forEach((option, index) => {
+                const button = document.createElement('button');
+                button.innerHTML = `<span class="mr-2">${q.icons[index]}</span> ${option}`;
+                button.className = 'option-button w-full bg-white p-3 rounded-lg text-gray-700 font-medium text-left flex items-center hover:bg-blue-100';
+                button.addEventListener('click', () => selectOption(option));
+                optionsElement.appendChild(button);
+            });
+            progressFill.style.width = `${((currentQuestion + 1) / questions.length) * 100}%`;
+            progressElement.textContent = `Question ${currentQuestion + 1} of ${questions.length}`;
+        }
+
+        function selectOption(option) {
+            answers.push(option);
+            questionContainer.classList.add('fade-out');
+            setTimeout(() => {
+                currentQuestion++;
+                if (currentQuestion < questions.length) {
+                    loadQuestion();
+                    questionContainer.classList.remove('fade-out');
+                    questionContainer.classList.add('fade-in');
+                } else {
+                    showResult();
+                }
+            }, 300);
+        }
+
+        function showResult() {
+            questionContainer.classList.add('hidden');
+            resultElement.classList.remove('hidden');
+            progressElement.classList.add('hidden');
+
+            let bestMatches = [];
+            let maxScore = -1;
+
+            cars.forEach(car => {
+                let score = 0;
+                questions.forEach((q, i) => {
+                    if (car.traits[q.key] === answers[i]) {
+                        score++;
+                    }
+                });
+                if (score > maxScore) {
+                    bestMatches = [{ car, score }];
+                    maxScore = score;
+                } else if (score === maxScore && score > 0) {
+                    bestMatches.push({ car, score });
+                }
+            });
+
+            const bestMatch = bestMatches.length > 0 
+                ? bestMatches[Math.floor(Math.random() * bestMatches.length)].car 
+                : cars[0];
+
+            carNameElement.textContent = bestMatch.name;
+            reasoningElement.textContent = bestMatch.description;
+
+            let reasoningText = bestMatch.description + "\n\nThis recommendation is based on your preferences:\n";
+            questions.forEach((q, i) => {
+                if (bestMatch.traits[q.key] === answers[i]) {
+                    reasoningText += `- ${q.question}: ${answers[i]}\n`;
+                }
+            });
+            reasoningElement.textContent = reasoningText;
+        }
+
+        restartButton.addEventListener('click', () => {
+            currentQuestion = 0;
+            answers = [];
+            questionContainer.classList.remove('hidden');
+            resultElement.classList.add('hidden');
+            progressElement.classList.remove('hidden');
+            loadQuestion();
+        });
+
+        loadQuestion();
+    </script>
+</body>
+</html>
